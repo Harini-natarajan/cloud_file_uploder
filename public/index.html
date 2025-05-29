@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloud File Uploader</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-100 via-white to-purple-100 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-xl text-center border border-gray-200">
+    <h1 class="text-3xl font-bold text-blue-600 mb-4">☁️ Cloud File Uploader</h1>
+    
+    <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
+      <label for="file" class="cursor-pointer border-2 border-dashed border-blue-400 rounded-xl p-6 w-full flex flex-col items-center justify-center hover:bg-blue-50 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-5-4l-4 4m0 0l4 4m-4-4h12" />
+        </svg>
+        <span class="text-gray-600">Click or drag & drop your file here</span>
+        <input type="file" name="file" id="file" class="hidden" accept="image/*" required />
+      </label>
+
+      <!-- Preview Section -->
+      <div id="preview" class="hidden mt-4 text-center">
+        <p class="text-sm text-gray-500 mb-1">Preview:</p>
+        <img id="previewImg" class="mx-auto max-h-40 rounded shadow-md mb-2" />
+        <button type="button" id="removeBtn" class="text-red-500 hover:underline text-sm">
+          ❌ Remove File
+        </button>
+      </div>
+
+      <button type="submit" id="uploadBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+        Upload to Cloudinary
+      </button>
+    </form>
+
+    <div id="uploadStatus" class="mt-6 hidden">
+      <p class="text-green-600 font-semibold mb-2">✅ File uploaded successfully!</p>
+      <a id="uploadedUrl" href="#" target="_blank" class="text-blue-500 underline text-sm break-all"></a>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("file");
+    const preview = document.getElementById("preview");
+    const previewImg = document.getElementById("previewImg");
+    const uploadForm = document.getElementById("uploadForm");
+    const uploadStatus = document.getElementById("uploadStatus");
+    const uploadedUrl = document.getElementById("uploadedUrl");
+    const removeBtn = document.getElementById("removeBtn");
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          preview.classList.remove("hidden");
+          previewImg.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.classList.add("hidden");
+      }
+    });
+
+    removeBtn.addEventListener("click", () => {
+      fileInput.value = "";
+      preview.classList.add("hidden");
+      previewImg.src = "";
+    });
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(uploadForm);
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        uploadStatus.classList.remove("hidden");
+        uploadedUrl.href = data.url;
+        uploadedUrl.textContent = data.url;
+        fileInput.value = "";
+        preview.classList.add("hidden");
+        previewImg.src = "";
+      } else {
+        alert("Upload failed!");
+      }
+    });
+  </script>
+</body>
+</html>
